@@ -1,53 +1,34 @@
 {
-    "name": "adapik/phpasn1",
-    "description": "A PHP Framework that allows you to encode and decode arbitrary ASN.1 structures using the ITU-T X.690 Encoding Rules.",
-    "type": "library",
-    "homepage": "https://github.com/Adapik/PHPASN1",
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "Alexander Danilov",
-            "email": "adapik@yandex.ru",
-            "homepage": "https://github.com/Adapik",
-            "role": "Author"
-        },
-        {
-            "name": "Friedrich Große",
-            "email": "friedrich.grosse@gmail.com",
-            "homepage": "https://github.com/FGrosse",
-            "role": "Author"
-        },
-        {
-            "name": "All contributors",
-            "homepage": "https://github.com/Adapik/PHPASN1/contributors"
-        }
-    ],
-    "keywords": [ "x690", "x.690", "x.509", "x509", "asn1", "asn.1", "ber", "der", "binary", "encoding", "decoding" ],
-
-    "require": {
-        "php": ">=7.1",
-        "ext-gmp": "*"
-    },
-    "require-dev": {
-        "phpunit/phpunit": "^7.0",
-        "satooshi/php-coveralls": "~2.0"
-    },
-    "suggest": {
-        "php-curl": "For loading OID information from the web if they have not bee defined statically"
-    },
-    "autoload": {
-        "psr-4": {
-            "FG\\": "src/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "FG\\Test\\": "tests/"
-        }
-    },
-    "extra": {
-        "branch-alias": {
-            "dev-master": "1.5.x-dev"
-        }
+  "name": "falselock/cms-editor",
+  "description": "A PHP Library that allows you to manupilate CMS.",
+  "type": "library",
+  "homepage": "https://github.com/Falseclock/CMS-EDITOR",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Nurlan Mukhanov",
+      "email": "nurike@gmail.com",
+      "homepage": "https://github.com/Falseclock",
+      "role": "Author"
     }
+  ],
+  "keywords": [ "cms", "pkcs7", "cades", "x690", "asn1", "asn.1", "ber", "der", "binary", "encoding", "decoding" ],
+
+  "require": {
+    "php": ">=7.0",
+    "adapik/phpasn1": "^2.2"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^6.2",
+  },
+  "autoload": {
+    "psr-4": {
+      "Falseclock\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Falseclock\\Test\\": "tests/"
+    }
+  }
 }
