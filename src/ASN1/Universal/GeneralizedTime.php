@@ -31,9 +31,6 @@ use FG\ASN1\ContentLength;
  */
 class GeneralizedTime extends AbstractTime
 {
-    const FORMAT_FRACTAL = "Y-m-d\TH:i:s.uP";
-    const FORMAT_BASE = "Y-m-d\TH:i:sP";
-
     private $microseconds;
 
     public function __construct(
@@ -68,9 +65,9 @@ class GeneralizedTime extends AbstractTime
     public function __toString(): string
     {
         if ($this->containsFractionalSecondsElement()) {
-            return $this->value->format(self::FORMAT_FRACTAL);
+            return $this->value->format("Y-m-d\TH:i:s.uP");
         } else {
-            return $this->value->format(self::FORMAT_BASE);
+            return $this->value->format("Y-m-d\TH:i:sP");
         }
     }
 
