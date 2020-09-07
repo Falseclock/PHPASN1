@@ -25,7 +25,7 @@ use FG\ASN1\Universal\Sequence;
  */
 abstract class ASN1Object implements ASN1ObjectInterface
 {
-    /** @var \FG\ASN1\ASN1Object[] */
+    /** @var ASN1Object[] */
     protected $children = [];
     private $parent;
 
@@ -110,7 +110,7 @@ abstract class ASN1Object implements ASN1ObjectInterface
      * @param int    $offsetIndex
      *
      * @throws ParserException
-     * @return ASN1Object
+     * @return ASN1ObjectInterface
      */
     public static function fromBinary(&$binaryData, &$offsetIndex = 0)
     {
@@ -131,7 +131,7 @@ abstract class ASN1Object implements ASN1ObjectInterface
     /**
      * @param $oidString
      *
-     * @return \FG\ASN1\Universal\ObjectIdentifier[]
+     * @return ObjectIdentifier[]
      */
     public function findByOid(string $oidString): array
     {
@@ -192,31 +192,31 @@ abstract class ASN1Object implements ASN1ObjectInterface
         if ($this->validateLengthContent()) {
             //nothing to rebuild
             return true;
-        } else {
-            //если форма неопределенная, то и у родителя она тоже неопределенная
-            // и энкодировать длину ни у одного родителя не нужно - просто изменить контент у всех предков
-            if ($this->contentLength->getLengthForm() === ContentLength::INDEFINITE_FORM) {
-                $this->contentLength = new ContentLength(
-                    $this->contentLength->getBinary(),
-                    $this->content->getNrOfOctets()
-                );
-            } else {
-                $this->contentLength = ElementBuilder::createContentLength(
-                    $this->content->getBinary(),
-                    $this->contentLength->getLengthForm()
-                );
-            }
+        }
 
-            if ($this->parent) {
-                $this->parent->rebuildTree();
-            }
+        //если форма неопределенная, то и у родителя она тоже неопределенная
+        // и энкодировать длину ни у одного родителя не нужно - просто изменить контент у всех предков
+        if ($this->contentLength->getLengthForm() === ContentLength::INDEFINITE_FORM) {
+            $this->contentLength = new ContentLength(
+                $this->contentLength->getBinary(),
+                $this->content->getNrOfOctets()
+            );
+        } else {
+            $this->contentLength = ElementBuilder::createContentLength(
+                $this->content->getBinary(),
+                $this->contentLength->getLengthForm()
+            );
+        }
+
+        if ($this->parent) {
+            $this->parent->rebuildTree();
         }
 
         if ($this->validateLengthContent()) {
             return true;
-        } else {
-            throw new \Exception('Дерево не восстановлено');
         }
+
+        throw new Exception('Tree was not rebuilt');
     }
 
     private function validateLengthContent()
@@ -262,7 +262,7 @@ abstract class ASN1Object implements ASN1ObjectInterface
     }
 
     /**
-     * @return \FG\ASN1\ASN1Object[]
+     * @return ASN1Object[]
      */
     public function getChildren(): array
     {
@@ -270,9 +270,9 @@ abstract class ASN1Object implements ASN1ObjectInterface
     }
 
     /**
-     * @return null|\FG\ASN1\ASN1Object
+     * @return null|ASN1Object
      */
-    public function getParent()
+    public function getParent(): ASN1ObjectInterface
     {
         return $this->parent;
     }
@@ -314,7 +314,7 @@ abstract class ASN1Object implements ASN1ObjectInterface
     /**
      * @param string $className
      *
-     * @return \FG\ASN1\ASN1Object[]
+     * @return ASN1Object[]
      * @throws \Exception
      */
     public function findChildrenByType($className)
@@ -333,7 +333,7 @@ abstract class ASN1Object implements ASN1ObjectInterface
     /**
      * @param $fileContent
      *
-     * @return \FG\ASN1\ASN1Object
+     * @return ASN1ObjectInterface
      * @throws \Exception
      */
     final public static function fromFile($fileContent)
@@ -353,10 +353,17 @@ abstract class ASN1Object implements ASN1ObjectInterface
         return self::fromBinary($file);
     }
 
+    /**
+     * In case we have to provide object as as, but won't provide access to parent node.
+     * That's very important in CMS package, cause we do not wont to give an
+     * ability to change any part of ASN.1 structure.
+     *
+     * @return ASN1ObjectInterface
+     */
     public function detach()
     {
-        $object       = clone $this;
-        $this->parent = null;
+        $object = clone $this;
+        $object->parent = null;
 
         return $object;
     }
@@ -374,5 +381,65 @@ abstract class ASN1Object implements ASN1ObjectInterface
     public function getBinaryContent()
     {
         return $this->content->getBinary();
+    }
+
+    /**
+     * @param ASN1ObjectInterface|ASN1ObjectInterface[] $object
+     * @return $this
+     * @throws \Exception
+     */
+    public function appendChild($object)
+    {
+        if ($object instanceof ASN1Object) {
+            $this->addChild($object);
+        } elseif (is_array($object)) {
+            $this->addChildren($object);
+        }
+
+        $this->rebuildTree();
+
+        return $this;
+    }
+
+    /**
+     * @param ASN1ObjectInterface $childToReplace
+     * @param ASN1ObjectInterface $replacement
+     * @return $this
+     * @throws Exception
+     */
+    public function replaceChild(ASN1ObjectInterface $childToReplace, ASN1ObjectInterface $replacement)
+    {
+        foreach ($this->getChildren() as $index => $child) {
+            if ($child === $childToReplace) {
+                $this->children[$index] = $replacement;
+                // New replacement must have old child's parent.
+                $replacement->parent = $this;
+                $this->rebuildTree();
+
+                return $this;
+            }
+        }
+
+        throw new Exception("Unknown child to be replaced");
+    }
+
+    /**
+     * @param ASN1ObjectInterface $childToDelete
+     * @return $this
+     * @throws Exception
+     */
+    public function removeChild(ASN1ObjectInterface $childToDelete)
+    {
+        foreach ($this->getChildren() as $index => $child) {
+            if ($child === $childToDelete) {
+                // We can't just call remove(), cause children array indexes will not be re-indexed
+                array_splice($this->children, $index, 1);
+                $this->rebuildTree();
+
+                return $this;
+            }
+        }
+
+        throw new Exception("Unknown child to be removed");
     }
 }
